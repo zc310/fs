@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"bytes"
-
 	"github.com/syndtr/goleveldb/leveldb"
-	"gopkg.in/vmihailenco/msgpack.v2"
+	"github.com/zc310/apiproxy/cache"
 	"github.com/zc310/utils"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type cacheValue struct {
@@ -31,10 +31,17 @@ type Cache struct {
 	db        *leveldb.DB
 }
 
-func New(store map[string]interface{}) (*Cache, error) {
-	cachepath :=utils.GetString( store["path"])
+func New(store map[string]interface{}) (cache.Cache, error) {
+	var cachepath string
+	if store != nil {
+		cachepath = utils.GetString(store["path"])
+	}
+	var err error
 	if cachepath == "" {
-		cachepath = filepath.Join(os.TempDir(), "cache")
+		cachepath, err = ioutil.TempDir(os.TempDir(), "cache")
+		if err != nil {
+			return nil, err
+		}
 	}
 	db, err := leveldb.OpenFile(filepath.Join(cachepath, "db"), nil)
 	if err != nil {
