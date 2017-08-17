@@ -8,7 +8,7 @@ import (
 
 	"github.com/valyala/bytebufferpool"
 	"github.com/valyala/fasthttp"
-	"github.com/zc310/apiproxy/template"
+	"github.com/zc310/fs/template"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 

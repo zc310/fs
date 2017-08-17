@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"github.com/valyala/fasthttp"
-	"github.com/zc310/apiproxy/cache"
-	"github.com/zc310/apiproxy/cache/filecache"
-	"github.com/zc310/apiproxy/template"
+	"github.com/zc310/fs/cache"
+	"github.com/zc310/fs/cache/filecache"
+	"github.com/zc310/fs/template"
 	"github.com/zc310/log"
 	"github.com/zc310/utils"
 	"github.com/zc310/utils/hash"
@@ -13,7 +13,7 @@ import (
 	"bytes"
 	"time"
 
-	"github.com/zc310/apiproxy/cache/memory"
+	"github.com/zc310/fs/cache/memory"
 	"github.com/zc310/utils/fasthttputil"
 )
 

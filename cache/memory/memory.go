@@ -1,7 +1,7 @@
 package memory
 
 import (
-	"github.com/zc310/apiproxy/cache"
+	"github.com/zc310/fs/cache"
 	"gopkg.in/vmihailenco/msgpack.v2"
 	"sync"
 	"time"

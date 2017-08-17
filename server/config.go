@@ -9,7 +9,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/zc310/alice"
-	"github.com/zc310/apiproxy/middleware"
+	"github.com/zc310/fs/middleware"
 
 	"github.com/zc310/log"
 	"gopkg.in/yaml.v2"

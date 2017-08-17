@@ -11,7 +11,7 @@ import (
 
 	"bytes"
 	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/zc310/apiproxy/cache"
+	"github.com/zc310/fs/cache"
 	"github.com/zc310/utils"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )

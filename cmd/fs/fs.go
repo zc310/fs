@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/zc310/apiproxy/server"
+	"github.com/zc310/fs/server"
 	"github.com/zc310/log"
 )
 

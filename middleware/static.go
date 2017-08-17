@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/valyala/fasthttp"
-	"github.com/zc310/apiproxy/template"
+	"github.com/zc310/fs/template"
 	"strings"
 )
 
