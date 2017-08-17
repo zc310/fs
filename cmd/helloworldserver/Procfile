@@ -1,0 +1,6 @@
+# Use goreman to run `go get github.com/mattn/goreman`
+server1: helloworldserver -addr :$PORT
+server2: helloworldserver -addr :$PORT
+server3: helloworldserver -addr :$PORT
+server4: helloworldserver -addr :$PORT
+server5: helloworldserver -addr :$PORT

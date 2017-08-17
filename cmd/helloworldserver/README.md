@@ -1,15 +1,15 @@
 # HelloWorld server example
 
 * Displays Hello, world!.
-* delay.
+* delay`http://127.0.0.1:7070/?delay=10s`.
 
 
 
 # How to run
 
-```
-./go run main.go -addr=:7070
-```
+
+`./go run main.go -addr=:7070`
+
 
 
 # hey test

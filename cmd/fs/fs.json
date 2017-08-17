@@ -1,0 +1,203 @@
+{
+  "listen": ":8080",
+  "name": "fs/1.0",
+  "max_body_size": "32m",
+  "log": {
+    "path": "{tempdir}/logs/"
+  },
+  "middleware": [
+    {
+      "name": "recover"
+    },
+    {
+      "name": "log",
+      "filename": "{tempdir}/logs/access.log",
+      "rotate_size": 10,
+      "rotate_age": 7,
+      "rotate_backups": 7
+    },
+    {
+      "name": "compress"
+    }
+  ],
+  "hosts": {
+    "127.0.0.1:8080": {
+      "paths": {
+        "/*filepath": {
+          "middleware": [
+            {
+              "name": "delay",
+              "delay": "100ms"
+            }
+          ],
+          "handler": {
+            "name": "helloworld"
+          }
+        }
+      }
+    },
+    "*": {
+      "middleware": [
+        {
+          "name": "stats"
+        }
+      ],
+      "paths": {
+        "/favicon.ico": {
+          "handler": {
+            "name": "favicon"
+          }
+        },
+        "/debug/pprof/*filepath": {
+          "handler": {
+            "name": "pprof"
+          }
+        },
+        "/debug/expvar/*filepath": {
+          "handler": {
+            "name": "expvar"
+          }
+        },
+        "/": {
+          "handler": {
+            "name": "ok"
+          }
+        },
+        "/nocache": {
+          "handler": {
+            "name": "helloworld"
+          },
+          "middleware": [
+            {
+              "name": "header",
+              "set": {
+                "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "Fri, 29 Aug 1997 02:14:00 EST"
+              },
+              "del": [
+                "ETag",
+                "If-Modified-Since",
+                "If-Match",
+                "If-None-Match",
+                "If-Range",
+                "If-Unmodified-Since"
+              ]
+            }
+          ]
+        },
+        "/tmp/*filepath": {
+          "handler": {
+            "name": "static",
+            "root": "${tempdir}/",
+            "generate_index_pages": true
+          },
+          "middleware": [
+            {
+              "name": "stats",
+              "path": "/_stats/tmp"
+            }
+          ]
+        },
+        "/ratelimit": {
+          "handler": {
+            "name": "helloworld"
+          },
+          "middleware": [
+            {
+              "name": "ratelimit",
+              "max": 100,
+              "duration": "1s"
+            }
+          ]
+        },
+        "/api": {
+          "handler": {
+            "name": "proxy",
+            "balance": {
+              "name": "first"
+            },
+            "targets": [
+              {
+                "url": "http://127.0.0.1:7070/",
+                "host": "127.0.0.1:7070"
+              }
+            ]
+          }
+        },
+        "/test": {
+          "middleware": [
+            {
+              "name": "proxy_header"
+            }
+          ],
+          "handler": {
+            "name": "proxy",
+            "balance": {
+              "name": "random"
+            },
+            "targets": [
+              {
+                "url": "http://127.0.0.1:5000/",
+                "host": "127.0.0.1:5000"
+              },
+              {
+                "url": "http://127.0.0.1:5001/",
+                "host": "127.0.0.1:5001"
+              },
+              {
+                "url": "http://127.0.0.1:5002/",
+                "host": "127.0.0.1:5002"
+              },
+              {
+                "url": "http://127.0.0.1:5003/",
+                "host": "127.0.0.1:5003"
+              },
+              {
+                "url": "http://127.0.0.1:5004/",
+                "host": "127.0.0.1:5004"
+              }
+            ]
+          }
+        },
+        "/anything": {
+          "handler": {
+            "name": "proxy",
+            "balance": {
+              "name": "hash_body",
+              "args": [
+                "a",
+                "b"
+              ]
+            },
+            "targets": [
+              {
+                "url": "http://127.0.0.1:8080/",
+                "host": "127.0.0.1:8080"
+              },
+              {
+                "url": "http://httpbin.org/",
+                "host": "httpbin.org"
+              }
+            ]
+          }
+        },
+        "/cache/*filepath": {
+          "middleware": [
+            {
+              "name": "cache",
+              "store": {
+                "name": "memory"
+              },
+              "timeout": "10s",
+              "key": "{query_string}.{document_root}"
+            }
+          ],
+          "handler": {
+            "name": "helloworld"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,81 @@
+name: fs/1.0
+listen: :8080
+maxbodysize: 16m
+middleware:
+- name: recover
+- filename: ${tempdir}/logs/access.log
+  name: log
+  rotate_age: 7
+  rotate_backups: 7
+  rotate_size: 10
+- name: compress
+hosts:
+  '*':
+    middleware:
+    - name: stats
+    paths:
+      /:
+        middleware: []
+        handler:
+          name: ok
+      /anything:
+        middleware: []
+        handler:
+          balance:
+            args:
+            - a
+            - b
+            name: hash_body
+          name: proxy
+          targets:
+          - host: 127.0.0.1:8080
+            url: http://127.0.0.1:8080/
+          - host: httpbin.org
+            url: http://httpbin.org/
+      /debug/expvar/*filepath:
+        middleware: []
+        handler:
+          name: expvar
+      /debug/pprof/*filepath:
+        middleware: []
+        handler:
+          name: pprof
+      /favicon.ico:
+        middleware: []
+        handler:
+          name: favicon
+      /header:
+        middleware:
+        - name: header
+          set:
+            Server: nginx/1.0
+            aaa: a
+            bbb: b
+            ccc: c
+        handler:
+          name: ok
+      /ratelimit:
+        middleware:
+        - duration: 1s
+          max: 100
+          name: ratelimit
+        handler:
+          name: helloworld
+      /tmp/*filepath:
+        middleware:
+        - name: stats
+          path: /_stats/tmp
+        handler:
+          generate_index_pages: true
+          name: static
+          root: ${tempdir}/
+  127.0.0.1:8080:
+    middleware: []
+    paths:
+      /*filepath:
+        middleware: []
+        handler:
+          name: helloworld
+log:
+  path: ${tempdir}/logs/
+logger: null
