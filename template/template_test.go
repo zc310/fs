@@ -9,6 +9,12 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+func TestTemplate(t *testing.T) {
+	s, err := New(nil).Execute("{tempdir}/logs/")
+	assert.Equal(t, nil, err)
+	assert.Equal(t, s, os.TempDir()+"/logs/")
+}
+
 func testExecute(t *testing.T, template *Template, s, out string) {
 	output, err := template.Execute(s)
 	assert.Equal(t, err, nil)
