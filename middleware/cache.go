@@ -45,16 +45,9 @@ func (p *Cache) Init(c *Config) (err error) {
 		return err
 	}
 
-	if p.Key == "" {
-		p.Key = "{request_uri}"
-	}
-
+	p.Key = utils.IfEmpty(p.Key, "{request_uri}")
 	p.log = c.Logger.NewWithPrefix("cache")
-
-	var ok bool
-	if p.hashFun, ok = hash.Get(p.Hash); !ok {
-		p.hashFun = hash.MD5
-	}
+	p.hashFun = GetHashFunc(p.Hash)
 	return nil
 }
 func (p *Cache) UnInit() {}
@@ -92,3 +85,12 @@ func (p *Cache) Process(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 	}
 }
 func (p *Cache) Handler() fasthttp.RequestHandler { return func(ctx *fasthttp.RequestCtx) {} }
+
+// GetHashFunc get hash func
+func GetHashFunc(a string) (f func(b []byte) string) {
+	var ok bool
+	if f, ok = hash.Get(a); ok {
+		return f
+	}
+	return hash.MD5
+}
