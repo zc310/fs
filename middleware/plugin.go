@@ -42,6 +42,7 @@ func init() {
 	SupportedPlugins["ratelimit"] = func() Plugin { return &Ratelimit{} }
 	SupportedPlugins["cache"] = func() Plugin { return &Cache{} }
 	SupportedPlugins["delay"] = func() Plugin { return &Delay{} }
+	SupportedPlugins["singleflight"] = func() Plugin { return &Singleflight{} }
 
 	SupportedPlugins["fastcgi"] = func() Plugin { return &Fastcgi{} }
 	SupportedPlugins["limit"] = func() Plugin { return &Limit{} }
