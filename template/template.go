@@ -6,11 +6,12 @@ import (
 	"os"
 	"strconv"
 
+	"sync"
+
 	"github.com/valyala/bytebufferpool"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasttemplate"
 	"github.com/zc310/utils/fasthttputil"
-	"sync"
 )
 
 type Template struct {
