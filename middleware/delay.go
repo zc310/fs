@@ -24,17 +24,27 @@ func (p *Delay) Handler() fasthttp.RequestHandler {
 }
 func (p *Delay) Process(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
+		var err error
 		delay := string(ctx.QueryArgs().Peek("delay"))
+		timeout := p.timeout
 		if delay != "" {
-			d, err := time.ParseDuration(delay)
-			if err == nil {
-				time.Sleep(d)
+			timeout, err = time.ParseDuration(delay)
+			if err != nil {
+				h(ctx)
 			}
 		} else {
-			if p.timeout > 0 {
-				time.Sleep(p.timeout)
+			if p.timeout <= 0 {
+				h(ctx)
 			}
 		}
-		h(ctx)
+
+		for {
+			select {
+			case <-time.After(timeout):
+				h(ctx)
+				return
+			}
+		}
+
 	}
 }
