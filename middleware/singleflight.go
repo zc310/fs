@@ -10,13 +10,17 @@ import (
 
 // Singleflight Singleflight
 type Singleflight struct {
-	Key     string `json:"key"`
-	Timeout string `json:"timeout"`
-	Hash    string `json:"hash"`
+	Key     string    `json:"key"`
+	Timeout string    `json:"timeout"`
+	Hash    string    `json:"hash"`
+	Check   CheckList `json:"check"`
 	hashFun func(b []byte) string
 	log     log.Logger
 	g       singleflight.Group
 }
+
+// CheckList key list
+type CheckList map[string][]string
 
 // Init ...
 func (p *Singleflight) Init(c *Config) (err error) {
@@ -46,7 +50,16 @@ func (p *Singleflight) Process(h fasthttp.RequestHandler) fasthttp.RequestHandle
 		)
 		tpl := template.Get()
 		defer template.Put(tpl)
+
 		tpl.SetCtx(ctx)
+		if ok, err := CheckHit(p.Check, ctx, tpl); !ok {
+			if err != nil {
+				p.log.Error(err, ctx.Request.String())
+			}
+			h(ctx)
+			return
+		}
+
 		if key, err = tpl.Execute(p.Key); err != nil {
 			p.log.Error(err, ctx.Request.String())
 			return
@@ -63,4 +76,24 @@ func (p *Singleflight) Process(h fasthttp.RequestHandler) fasthttp.RequestHandle
 		}
 		ctx.Response.SetBodyString(body.(string))
 	}
+}
+
+// CheckHit check args
+func CheckHit(list CheckList, ctx *fasthttp.RequestCtx, tpl *template.Template) (bool, error) {
+	if list != nil {
+		var key string
+		var err error
+		for k, v1 := range list {
+			if key, err = tpl.Execute(k); err != nil {
+				return false, err
+			}
+			for _, v2 := range v1 {
+				if v2 == key {
+					return true, nil
+				}
+			}
+		}
+		return false, nil
+	}
+	return true, nil
 }

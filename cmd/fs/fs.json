@@ -181,13 +181,23 @@
         "/singleflight/*filepath": {
           "middleware": [{
               "name": "singleflight",
-              "key": "{query_string}.{a}.{b}.{c}"
+              "key": "{query_string}.{a}.{b}.{c}",
+              "check": {
+                "{par1}": [
+                  "a",
+                  "b"
+                ],
+                "{par2}.{par3}": [
+                  "b.c",
+                  "1.2",
+                  "2.3"
+                ]
+              }
             },
             {
               "name": "delay",
-              "delay": "10s"
+              "delay": "50ms"
             }
-
           ],
           "handler": {
             "name": "helloworld"

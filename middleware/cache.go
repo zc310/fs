@@ -22,6 +22,7 @@ type Cache struct {
 	Key     string                 `json:"key"`
 	Timeout string                 `json:"timeout"`
 	Hash    string                 `json:"hash"`
+	Check   CheckList              `json:"check"`
 	timeout time.Duration
 	hashFun func(b []byte) string
 	cache   cache.Cache
@@ -60,6 +61,15 @@ func (p *Cache) Process(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 		tpl := template.Get()
 		defer template.Put(tpl)
 		tpl.SetCtx(ctx)
+
+		if ok, err := CheckHit(p.Check, ctx, tpl); !ok {
+			if err != nil {
+				p.log.Error(err, ctx.Request.String())
+			}
+			h(ctx)
+			return
+		}
+
 		if key, err = tpl.Execute(p.Key); err != nil {
 			p.log.Error(err, ctx.Request.String())
 		} else {
