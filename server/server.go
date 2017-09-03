@@ -48,17 +48,20 @@ func Start(c *Config) error {
 
 		hw.Add(name, alice.New(mw...).Then(cfg.Router.Handler))
 
-		for path, p := range host.Paths {
-			cfg.Path = strings.TrimSuffix(path, "*filepath")
-			mw, err = p.Middleware.Load(cfg)
+		for _,router := range host.Router {
+			mw, err = router.Middleware.Load(cfg)
 			if err != nil {
 				return err
 			}
-			mp, err = p.Handler.Load(cfg)
+			mp, err = router.Handler.Load(cfg)
 			if err != nil {
 				return err
 			}
-			AddRouter(cfg.Router, path, alice.New(mw...).Then(mp.Handler()))
+			for _,path:=range router.Paths{
+				cfg.Path = strings.TrimSuffix(path, "*filepath")
+				AddRouter(cfg.Router, path, alice.New(mw...).Then(mp.Handler()))
+			}
+
 		}
 	}
 	m, err := humanize.ParseBytes(c.MaxBodySize)

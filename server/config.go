@@ -21,11 +21,12 @@ type (
 	Plugin     map[string]interface{}
 	Middleware []Plugin
 	Host       struct {
-		Middleware Middleware       `json:"middleware"`
-		Paths      map[string]*Path `json:"paths"`
+		Middleware Middleware `json:"middleware"`
+		Router    []*Router    `json:"router"`
 	}
 
-	Path struct {
+	Router struct {
+		Paths      []string   `json:"paths"`
 		Middleware Middleware `json:"middleware"`
 		Handler    Plugin     `json:"handler"`
 	}

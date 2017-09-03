@@ -5,7 +5,8 @@
   "log": {
     "path": "{tempdir}/logs/"
   },
-  "middleware": [{
+  "middleware": [
+    {
       "name": "recover"
     },
     {
@@ -21,107 +22,152 @@
   ],
   "hosts": {
     "127.0.0.1:8080": {
-      "paths": {
-        "/*filepath": {
-          "middleware": [{
-            "name": "delay",
-            "delay": "100ms"
-          }],
+      "router": [
+        {
+          "paths": [
+            "/*filepath"
+          ],
+          "middleware": [
+            {
+              "name": "delay",
+              "delay": "100ms"
+            }
+          ],
           "handler": {
             "name": "helloworld"
           }
         }
-      }
+      ]
     },
     "*": {
-      "middleware": [{
-        "name": "stats"
-      }],
-      "paths": {
-        "/favicon.ico": {
+      "middleware": [
+        {
+          "name": "stats"
+        }
+      ],
+      "router": [
+        {
+          "paths": [
+            "/favicon.ico"
+          ],
           "handler": {
             "name": "favicon"
           }
         },
-        "/debug/pprof/*filepath": {
+        {
+          "paths": [
+            "/debug/pprof/*filepath"
+          ],
           "handler": {
             "name": "pprof"
           }
         },
-        "/debug/expvar/*filepath": {
+        {
+          "paths": [
+            "/debug/expvar/*filepath"
+          ],
           "handler": {
             "name": "expvar"
           }
         },
-        "/": {
+        {
+          "paths": [
+            "/"
+          ],
           "handler": {
             "name": "ok"
           }
         },
-        "/nocache": {
+        {
+          "paths": [
+            "/nocache"
+          ],
           "handler": {
             "name": "helloworld"
           },
-          "middleware": [{
-            "name": "header",
-            "set": {
-              "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
-              "Pragma": "no-cache",
-              "Expires": "Fri, 29 Aug 1997 02:14:00 EST"
-            },
-            "del": [
-              "ETag",
-              "If-Modified-Since",
-              "If-Match",
-              "If-None-Match",
-              "If-Range",
-              "If-Unmodified-Since"
-            ]
-          }]
+          "middleware": [
+            {
+              "name": "header",
+              "set": {
+                "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "Fri, 29 Aug 1997 02:14:00 EST"
+              },
+              "del": [
+                "ETag",
+                "If-Modified-Since",
+                "If-Match",
+                "If-None-Match",
+                "If-Range",
+                "If-Unmodified-Since"
+              ]
+            }
+          ]
         },
-        "/tmp/*filepath": {
+        {
+          "paths": [
+            "/tmp/*filepath"
+          ],
           "handler": {
             "name": "static",
             "root": "${tempdir}/",
             "generate_index_pages": true
           },
-          "middleware": [{
-            "name": "stats",
-            "path": "/_stats/tmp"
-          }]
+          "middleware": [
+            {
+              "name": "stats",
+              "path": "/_stats/tmp"
+            }
+          ]
         },
-        "/ratelimit": {
+        {
+          "paths": [
+            "/ratelimit"
+          ],
           "handler": {
             "name": "helloworld"
           },
-          "middleware": [{
-            "name": "ratelimit",
-            "max": 100,
-            "duration": "1s"
-          }]
+          "middleware": [
+            {
+              "name": "ratelimit",
+              "max": 100,
+              "duration": "1s"
+            }
+          ]
         },
-        "/api": {
+        {
+          "paths": [
+            "/api"
+          ],
           "handler": {
             "name": "proxy",
             "balance": {
               "name": "first"
             },
-            "targets": [{
-              "url": "http://127.0.0.1:7070/",
-              "host": "127.0.0.1:7070"
-            }]
+            "targets": [
+              {
+                "url": "http://127.0.0.1:7070/",
+                "host": "127.0.0.1:7070"
+              }
+            ]
           }
         },
-        "/test": {
-          "middleware": [{
-            "name": "proxy_header"
-          }],
+        {
+          "paths": [
+            "/test"
+          ],
+          "middleware": [
+            {
+              "name": "proxy_header"
+            }
+          ],
           "handler": {
             "name": "proxy",
             "balance": {
               "name": "random"
             },
-            "targets": [{
+            "targets": [
+              {
                 "url": "http://127.0.0.1:5000/",
                 "host": "127.0.0.1:5000"
               },
@@ -144,7 +190,10 @@
             ]
           }
         },
-        "/anything": {
+        {
+          "paths": [
+            "/anything"
+          ],
           "handler": {
             "name": "proxy",
             "balance": {
@@ -154,7 +203,8 @@
                 "b"
               ]
             },
-            "targets": [{
+            "targets": [
+              {
                 "url": "http://127.0.0.1:8080/",
                 "host": "127.0.0.1:8080"
               },
@@ -165,21 +215,30 @@
             ]
           }
         },
-        "/cache/*filepath": {
-          "middleware": [{
-            "name": "cache",
-            "store": {
-              "name": "memory"
-            },
-            "timeout": "10s",
-            "key": "{query_string}.{document_root}"
-          }],
+        {
+          "paths": [
+            "/cache/*filepath"
+          ],
+          "middleware": [
+            {
+              "name": "cache",
+              "store": {
+                "name": "memory"
+              },
+              "timeout": "10s",
+              "key": "{query_string}.{document_root}"
+            }
+          ],
           "handler": {
             "name": "helloworld"
           }
         },
-        "/singleflight/*filepath": {
-          "middleware": [{
+        {
+          "paths": [
+            "/singleflight/*filepath"
+          ],
+          "middleware": [
+            {
               "name": "singleflight",
               "key": "{query_string}.{a}.{b}.{c}",
               "check": {
@@ -196,14 +255,15 @@
             },
             {
               "name": "delay",
-              "delay": "50ms"
+              "delay": "30s"
             }
           ],
           "handler": {
             "name": "helloworld"
           }
         }
-      }
+        }
+      ]
     }
   }
 }
