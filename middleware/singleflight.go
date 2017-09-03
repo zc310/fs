@@ -48,6 +48,10 @@ func (p *Singleflight) Process(h fasthttp.RequestHandler) fasthttp.RequestHandle
 			body interface{}
 			err  error
 		)
+		type Cache struct {
+			header fasthttp.ResponseHeader
+			body   []byte
+		}
 		tpl := template.Get()
 		defer template.Put(tpl)
 
@@ -64,17 +68,22 @@ func (p *Singleflight) Process(h fasthttp.RequestHandler) fasthttp.RequestHandle
 			p.log.Error(err, ctx.Request.String())
 			return
 		}
-
+		var cache Cache
 		body, err = p.g.Do(p.hashFun([]byte(key)), func() (interface{}, error) {
 			h(ctx)
-			return ctx.Response.String(), nil
+			cache.body = ctx.Response.Body()
+			cache.header = ctx.Response.Header
+			return cache, nil
 		})
 		if err != nil {
 			p.log.Error(err, ctx.Request.String())
 			h(ctx)
 			return
 		}
-		ctx.Response.SetBodyString(body.(string))
+
+		cache = body.(Cache)
+		ctx.Response.Header = cache.header
+		ctx.Response.SetBody(cache.body)
 	}
 }
 
