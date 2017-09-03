@@ -56,7 +56,7 @@ func (p *Singleflight) Process(h fasthttp.RequestHandler) fasthttp.RequestHandle
 		defer template.Put(tpl)
 
 		tpl.SetCtx(ctx)
-		if ok, err := CheckHit(p.Check, ctx, tpl); !ok {
+		if ok, err := CheckHit(p.Check, tpl); !ok {
 			if err != nil {
 				p.log.Error(err, ctx.Request.String())
 			}
@@ -88,7 +88,7 @@ func (p *Singleflight) Process(h fasthttp.RequestHandler) fasthttp.RequestHandle
 }
 
 // CheckHit check args
-func CheckHit(list CheckList, ctx *fasthttp.RequestCtx, tpl *template.Template) (bool, error) {
+func CheckHit(list CheckList, tpl *template.Template) (bool, error) {
 	if list != nil {
 		var key string
 		var err error

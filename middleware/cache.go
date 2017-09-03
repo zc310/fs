@@ -62,7 +62,7 @@ func (p *Cache) Process(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 		defer template.Put(tpl)
 		tpl.SetCtx(ctx)
 
-		if ok, err := CheckHit(p.Check, ctx, tpl); !ok {
+		if ok, err := CheckHit(p.Check, tpl); !ok {
 			if err != nil {
 				p.log.Error(err, ctx.Request.String())
 			}
