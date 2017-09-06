@@ -3,14 +3,10 @@ package middleware
 import (
 	"bytes"
 	"encoding/base64"
-
+	"github.com/valyala/fasthttp"
 	"github.com/zc310/headers"
-
-	"fmt"
 	"net/http"
 	"strings"
-
-	"github.com/valyala/fasthttp"
 )
 
 type BasicAuth struct {
@@ -20,7 +16,6 @@ type BasicAuth struct {
 func (p *BasicAuth) Init(c *Config) (err error)       { return nil }
 func (p *BasicAuth) UnInit()                          {}
 func (p *BasicAuth) Handler() fasthttp.RequestHandler { return func(ctx *fasthttp.RequestCtx) {} }
-
 func (p *BasicAuth) Process(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		if !p.authenticate(ctx) {
@@ -37,7 +32,6 @@ func (p *BasicAuth) authenticate(ctx *fasthttp.RequestCtx) bool {
 	if !strings.HasPrefix(auth, basicScheme) {
 		return false
 	}
-	fmt.Println("auth ", auth)
 	str, err := base64.StdEncoding.DecodeString(auth[len(basicScheme):])
 	if err != nil {
 		return false
