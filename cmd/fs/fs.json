@@ -20,8 +20,11 @@
       "name": "compress"
     }
   ],
-  "hosts": {
-    "127.0.0.1:8080": {
+  "handler": [
+    {
+      "host": [
+        "127.0.0.1:8080"
+      ],
       "router": [
         {
           "paths": [
@@ -39,7 +42,10 @@
         }
       ]
     },
-    "*": {
+    {
+      "host": [
+        "*"
+      ],
       "middleware": [
         {
           "name": "stats"
@@ -261,9 +267,27 @@
           "handler": {
             "name": "helloworld"
           }
-        }
+        },
+        {
+          "paths": [
+            "/auth/basic/"
+          ],
+          "middleware": [
+            {
+              "name": "basicauth",
+              "auth": {
+                "user": "pass",
+                "liu": "eyu",
+                "admin": "password",
+                "foo":"bar"
+              }
+            }
+          ],
+          "handler": {
+            "name": "helloworld"
+          }
         }
       ]
     }
-  }
+  ]
 }
