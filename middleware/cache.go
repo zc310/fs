@@ -15,6 +15,7 @@ import (
 
 	"github.com/zc310/fs/cache/memory"
 	"github.com/zc310/utils/fasthttputil"
+	"strconv"
 )
 
 type Cache struct {
@@ -76,22 +77,17 @@ func (p *Cache) Process(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 
 			if b, ok := p.cache.Get(p.hashFun(key)); ok {
 				ctx.Response.Read(bufio.NewReader(bytes.NewBuffer(b)))
+
+				tag1 := ctx.Response.Header.Peek("ETag")
+				if len(tag1) > 0 && bytes.Equal(ctx.Request.Header.Peek("If-None-Match"), tag1) {
+					ctx.NotModified()
+				}
 				return
-
-				//
-				//etag := ctx.Response.Header.Peek("etag")
-				//if len(etag) > 0 && len(ctx.Request.Header.Peek("etag")) == 0 {
-				//	lastModified := ctx.Response.Header.Peek("last-modified")
-				//	if len(lastModified) > 0 && len(ctx.Request.Header.Peek("last-modified")) == 0 {
-				//		ctx.Request.Header.SetBytesV("if-none-match", etag)
-				//		ctx.Request.Header.SetBytesV("if-modified-since", lastModified)
-				//	}
-				//}
-
 			}
 		}
 		h(ctx)
 		if age, ok := fasthttputil.GetResponseAge(ctx, p.timeout); ok {
+			ctx.Response.Header.Set("Cache-Control", "public, max-age="+strconv.Itoa( int(p.timeout.Seconds())))
 			p.cache.Set(key, []byte(ctx.Response.String()), age)
 		}
 
