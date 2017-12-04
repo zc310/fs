@@ -27,7 +27,7 @@ func (p *Logger) Init(c *Config) (err error) {
 		return err
 	}
 	p.Log = &lumberjack.Logger{
-		Filename:   filename,
+		Filename:   string(filename),
 		MaxSize:    p.MaxSize,
 		MaxBackups: p.MaxBackups,
 		MaxAge:     p.MaxAge,

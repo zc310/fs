@@ -1,20 +1,11 @@
 package memory
 
 import (
+	"encoding/binary"
 	"github.com/zc310/fs/cache"
-	"gopkg.in/vmihailenco/msgpack.v2"
 	"sync"
 	"time"
 )
-
-type cacheValue struct {
-	Value   []byte
-	Expires time.Time
-}
-
-func (p *cacheValue) Expired() bool {
-	return p.Expires.Before(time.Now())
-}
 
 // New returns a new Cache in in-memory
 func New(_ map[string]interface{}) (cache.Cache, error) {
@@ -28,23 +19,21 @@ type MemoryCache struct {
 }
 
 // Get get cached value by key
-func (p *MemoryCache) Get(key string) (value []byte, ok bool) {
+func (p *MemoryCache) Get(key []byte) (value []byte, ok bool) {
 	var b []byte
 	p.mu.RLock()
-	b, ok = p.items[key]
+	b, ok = p.items[string(key)]
 	p.mu.RUnlock()
 	if !ok {
 		return
 	}
-	r := new(cacheValue)
-	if err := msgpack.Unmarshal(b, r); err != nil {
-		return nil, false
-	}
-	return r.Value, !r.Expired()
+	value = make([]byte, len(b)-8)
+	copy(value, b[8:])
+	return b[8:], binary.LittleEndian.Uint64(b[:8]) > uint64(time.Now().Unix())
 }
 
 // GetRange
-func (p *MemoryCache) GetRange(key string, low, high int64) (value []byte, ok bool) {
+func (p *MemoryCache) GetRange(key []byte, low, high int64) (value []byte, ok bool) {
 	if value, ok = p.Get(key); !ok {
 		return
 	}
@@ -52,19 +41,22 @@ func (p *MemoryCache) GetRange(key string, low, high int64) (value []byte, ok bo
 }
 
 // Put set cached value with key and expire time
-func (p *MemoryCache) Set(key string, value []byte, timeout time.Duration) (err error) {
-	var b []byte
-	b, err = msgpack.Marshal(&cacheValue{value, time.Now().Add(timeout)})
+func (p *MemoryCache) Set(key []byte, value []byte, timeout time.Duration) (err error) {
+	b := make([]byte, 8+len(value))
+	binary.LittleEndian.PutUint64(b, uint64(time.Now().Add(timeout).Unix()))
+
+	copy(b[8:], value)
+
 	p.mu.RLock()
-	p.items[key] = b
+	p.items[string(key)] = b
 	p.mu.RUnlock()
 	return err
 }
 
 // Delete delete cached value by key
-func (p *MemoryCache) Delete(key string) (err error) {
+func (p *MemoryCache) Delete(key []byte) (err error) {
 	p.mu.Lock()
-	delete(p.items, key)
+	delete(p.items, string(key))
 	p.mu.Unlock()
 	return nil
 }

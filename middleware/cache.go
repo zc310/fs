@@ -24,7 +24,7 @@ type Cache struct {
 	Hash    string                 `json:"hash"`
 	Check   CheckList              `json:"check"`
 	timeout time.Duration
-	hashFun func(b []byte) string
+	hashFun func(b []byte) []byte
 	cache   cache.Cache
 
 	log log.Logger
@@ -55,7 +55,7 @@ func (p *Cache) UnInit() {}
 func (p *Cache) Process(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var (
-			key string
+			key []byte
 			err error
 		)
 		tpl := template.Get()
@@ -73,8 +73,8 @@ func (p *Cache) Process(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 		if key, err = tpl.Execute(p.Key); err != nil {
 			p.log.Error(err, ctx.Request.String())
 		} else {
-			key = p.hashFun([]byte(key))
-			if b, ok := p.cache.Get(key); ok {
+
+			if b, ok := p.cache.Get(p.hashFun(key)); ok {
 				ctx.Response.Read(bufio.NewReader(bytes.NewBuffer(b)))
 				return
 
@@ -91,16 +91,22 @@ func (p *Cache) Process(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 			}
 		}
 		h(ctx)
-		p.cache.Set(key, []byte(ctx.Response.String()), fasthttputil.GetResponseAge(ctx, p.timeout))
+		if age, ok := fasthttputil.GetResponseAge(ctx, p.timeout); ok {
+			p.cache.Set(key, []byte(ctx.Response.String()), age)
+		}
+
 	}
 }
 func (p *Cache) Handler() fasthttp.RequestHandler { return func(ctx *fasthttp.RequestCtx) {} }
 
 // GetHashFunc get hash func
-func GetHashFunc(a string) (f func(b []byte) string) {
-	var ok bool
-	if f, ok = hash.Get(a); ok {
-		return f
+func GetHashFunc(a string) (f func(b []byte) []byte) {
+	if a == "" {
+		return func(b []byte) []byte { return b }
 	}
-	return hash.MD5
+
+	if t, ok := hash.Get(a); ok {
+		return func(b []byte) []byte { return []byte(t(b)) }
+	}
+	return func(b []byte) []byte { return []byte(hash.MD5(b)) }
 }

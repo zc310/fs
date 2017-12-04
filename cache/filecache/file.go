@@ -50,8 +50,8 @@ func New(store map[string]interface{}) (cache.Cache, error) {
 	return &Cache{cachepath, db}, nil
 }
 
-func (p *Cache) getValue(key string) (*cacheValue, bool) {
-	b, err := p.db.Get([]byte(key), nil)
+func (p *Cache) getValue(key []byte) (*cacheValue, bool) {
+	b, err := p.db.Get(key, nil)
 	if err != nil {
 		return nil, false
 	}
@@ -64,7 +64,7 @@ func (p *Cache) getValue(key string) (*cacheValue, bool) {
 }
 
 // Get get cached value by key
-func (p *Cache) Get(key string) (value []byte, ok bool) {
+func (p *Cache) Get(key []byte) (value []byte, ok bool) {
 	var err error
 	var cv *cacheValue
 	if cv, ok = p.getValue(key); !ok {
@@ -84,7 +84,7 @@ func (p *Cache) Get(key string) (value []byte, ok bool) {
 }
 
 // GetRange
-func (p *Cache) GetRange(key string, low, high int64) (value []byte, ok bool) {
+func (p *Cache) GetRange(key []byte, low, high int64) (value []byte, ok bool) {
 	if high == 0 {
 		return p.Get(key)
 	}
@@ -116,7 +116,7 @@ func (p *Cache) GetRange(key string, low, high int64) (value []byte, ok bool) {
 }
 
 // Put set cached value with key and expire time
-func (p *Cache) Set(key string, value []byte, timeout time.Duration) (err error) {
+func (p *Cache) Set(key []byte, value []byte, timeout time.Duration) (err error) {
 	var cv cacheValue
 	var b []byte
 
@@ -124,7 +124,7 @@ func (p *Cache) Set(key string, value []byte, timeout time.Duration) (err error)
 		cv.Value = value
 	} else {
 		hash := sha1.New()
-		io.WriteString(hash, key)
+		hash.Write(key)
 		file := hex.EncodeToString(hash.Sum(nil))
 		cachepath := filepath.Join(p.cachePath, filepath.Join(file[0:2], file[7:9]))
 		if err = os.MkdirAll(cachepath, os.ModePerm); err != nil {
@@ -144,7 +144,7 @@ func (p *Cache) Set(key string, value []byte, timeout time.Duration) (err error)
 }
 
 // Delete delete cached value by key
-func (p *Cache) Delete(key string) (err error) {
+func (p *Cache) Delete(key []byte) (err error) {
 	var cv *cacheValue
 	var ok bool
 	if cv, ok = p.getValue(key); !ok {
@@ -155,7 +155,7 @@ func (p *Cache) Delete(key string) (err error) {
 			return
 		}
 	}
-	return p.db.Delete([]byte(key), nil)
+	return p.db.Delete(key, nil)
 }
 
 // ClearAll clear all cache

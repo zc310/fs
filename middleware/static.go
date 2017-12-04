@@ -23,7 +23,7 @@ func (p *Static) Init(c *Config) (err error) {
 		return err
 	}
 	fs := &fasthttp.FS{
-		Root:               root,
+		Root:               string(root),
 		IndexNames:         p.Index,
 		GenerateIndexPages: p.GenerateIndexPages,
 		AcceptByteRange:    p.AcceptByteRange,

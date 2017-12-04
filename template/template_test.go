@@ -12,13 +12,13 @@ import (
 func TestTemplate(t *testing.T) {
 	s, err := New(nil).Execute("{tempdir}/logs/")
 	assert.Equal(t, nil, err)
-	assert.Equal(t, s, os.TempDir()+"/logs/")
+	assert.Equal(t, string(s), os.TempDir()+"/logs/")
 }
 
 func testExecute(t *testing.T, template *Template, s, out string) {
 	output, err := template.Execute(s)
 	assert.Equal(t, err, nil)
-	assert.Equal(t, output, out)
+	assert.Equal(t, output, []byte(out))
 }
 func TestTemplate_Execute(t *testing.T) {
 	var ctx fasthttp.RequestCtx

@@ -37,7 +37,7 @@ func New(ctx *fasthttp.RequestCtx) *Template {
 func (p *Template) SetCtx(ctx *fasthttp.RequestCtx) {
 	p.ctx = ctx
 }
-func (p *Template) Execute(t string) (string, error) {
+func (p *Template) Execute(t string) ([]byte, error) {
 	buf := bytebufferpool.Get()
 	defer bytebufferpool.Put(buf)
 	_, err := fasttemplate.New(t, "{", "}").ExecuteFunc(buf, (func(w io.Writer, tag string) (int, error) {
@@ -74,9 +74,9 @@ func (p *Template) Execute(t string) (string, error) {
 			return 0, fmt.Errorf("[unknown tag %q]", tag)
 		}
 	}))
-	return buf.String(), err
+	return buf.Bytes(), err
 }
 
-func NewTemplate(t string) (string, error) {
+func NewTemplate(t string) ([]byte, error) {
 	return New(nil).Execute(t)
 }

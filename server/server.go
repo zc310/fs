@@ -1,15 +1,16 @@
 package server
 
 import (
-	"github.com/buaazp/fasthttprouter"
+	"strings"
+
 	"github.com/dustin/go-humanize"
 	"github.com/valyala/fasthttp"
 	"github.com/zc310/alice"
+	"github.com/zc310/fasthttprouter"
 	"github.com/zc310/fs/middleware"
 	"github.com/zc310/fs/template"
 	"github.com/zc310/log"
 	"github.com/zc310/utils/fasthttputil"
-	"strings"
 )
 
 // Start 初始化
@@ -21,7 +22,7 @@ func Start(c *Config) error {
 		if err != nil {
 			return err
 		}
-		log.SetPath(t)
+		log.SetPath(string(t))
 	}
 
 	cfg.Logger = log.NewWithPrefix("fs")
@@ -39,16 +40,17 @@ func Start(c *Config) error {
 		h = alice.New(mw...)
 	}
 	hw := make(fasthttputil.HostSwitch)
-	for name, host := range c.Hosts {
+	for _, h := range c.Handler {
 		cfg.Router = fasthttprouter.New()
-		mw, err = host.Middleware.Load(cfg)
+		mw, err = h.Middleware.Load(cfg)
 		if err != nil {
 			return err
 		}
+		for _, name := range h.Host {
+			hw.Add(name, alice.New(mw...).Then(cfg.Router.Handler))
+		}
 
-		hw.Add(name, alice.New(mw...).Then(cfg.Router.Handler))
-
-		for _,router := range host.Router {
+		for _, router := range h.Router {
 			mw, err = router.Middleware.Load(cfg)
 			if err != nil {
 				return err
@@ -57,7 +59,7 @@ func Start(c *Config) error {
 			if err != nil {
 				return err
 			}
-			for _,path:=range router.Paths{
+			for _, path := range router.Paths {
 				cfg.Path = strings.TrimSuffix(path, "*filepath")
 				AddRouter(cfg.Router, path, alice.New(mw...).Then(mp.Handler()))
 			}

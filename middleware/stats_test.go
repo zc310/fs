@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/buaazp/fasthttprouter"
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
+	"github.com/zc310/fasthttprouter"
 )
 
 func TestStats_Handler(t *testing.T) {

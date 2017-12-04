@@ -20,9 +20,10 @@ import (
 type (
 	Plugin     map[string]interface{}
 	Middleware []Plugin
-	Host       struct {
+	Handler    struct {
+		Host       []string   `json:"host"`
 		Middleware Middleware `json:"middleware"`
-		Router    []*Router    `json:"router"`
+		Router     []*Router  `json:"router"`
 	}
 
 	Router struct {
@@ -38,9 +39,9 @@ type (
 		Listen      string     `json:"listen"`
 		MaxBodySize string     `json:"max_body_size"`
 		Middleware  Middleware `json:"middleware"`
-		// Hosts Host列表
-		Hosts map[string]*Host `json:"hosts"`
-		Log   struct {
+		// Handler Handler
+		Handler []*Handler `json:"handler"`
+		Log     struct {
 			Path string `json:"path"`
 		} `json:"log"`
 		Logger log.Logger `json:"-",yaml:"-"`

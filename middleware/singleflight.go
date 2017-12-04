@@ -14,7 +14,7 @@ type Singleflight struct {
 	Timeout string    `json:"timeout"`
 	Hash    string    `json:"hash"`
 	Check   CheckList `json:"check"`
-	hashFun func(b []byte) string
+	hashFun func(b []byte) []byte
 	log     log.Logger
 	g       singleflight.Group
 }
@@ -44,7 +44,7 @@ func (p *Singleflight) Handler() fasthttp.RequestHandler {
 func (p *Singleflight) Process(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var (
-			key  string
+			key  []byte
 			body interface{}
 			err  error
 		)
@@ -69,7 +69,7 @@ func (p *Singleflight) Process(h fasthttp.RequestHandler) fasthttp.RequestHandle
 			return
 		}
 		var cache Cache
-		body, err = p.g.Do(p.hashFun([]byte(key)), func() (interface{}, error) {
+		body, err = p.g.Do(string(p.hashFun(key)), func() (interface{}, error) {
 			h(ctx)
 			cache.body = ctx.Response.Body()
 			cache.header = ctx.Response.Header
@@ -90,14 +90,16 @@ func (p *Singleflight) Process(h fasthttp.RequestHandler) fasthttp.RequestHandle
 // CheckHit check args
 func CheckHit(list CheckList, tpl *template.Template) (bool, error) {
 	if list != nil {
-		var key string
+		var key []byte
+		var t string
 		var err error
 		for k, v1 := range list {
 			if key, err = tpl.Execute(k); err != nil {
 				return false, err
 			}
+			t = string(key)
 			for _, v2 := range v1 {
-				if v2 == key {
+				if v2 == t {
 					return true, nil
 				}
 			}
