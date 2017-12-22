@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"bytes"
+
+	"github.com/dustin/go-humanize"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/zc310/fs/cache"
 	"github.com/zc310/utils"
@@ -29,6 +31,7 @@ func (p *cacheValue) Expired() bool {
 type Cache struct {
 	cachePath string
 	db        *leveldb.DB
+	fileSize  uint64
 }
 
 func New(store map[string]interface{}) (cache.Cache, error) {
@@ -36,6 +39,7 @@ func New(store map[string]interface{}) (cache.Cache, error) {
 	if store != nil {
 		cachepath = utils.GetString(store["path"])
 	}
+
 	var err error
 	if cachepath == "" {
 		cachepath, err = ioutil.TempDir(os.TempDir(), "cache")
@@ -47,7 +51,14 @@ func New(store map[string]interface{}) (cache.Cache, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Cache{cachepath, db}, nil
+	var m uint64
+	if store != nil {
+		m, err = humanize.ParseBytes(utils.GetString(store["size"]))
+	}
+	if m <= 0 {
+		m = 128 * 1024
+	}
+	return &Cache{cachepath, db, m}, nil
 }
 
 func (p *Cache) getValue(key []byte) (*cacheValue, bool) {
@@ -120,7 +131,7 @@ func (p *Cache) Set(key []byte, value []byte, timeout time.Duration) (err error)
 	var cv cacheValue
 	var b []byte
 
-	if len(value) <= 10*1024 {
+	if uint64(len(value)) <= p.fileSize {
 		cv.Value = value
 	} else {
 		hash := sha1.New()
