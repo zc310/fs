@@ -8,7 +8,6 @@ import (
 	"github.com/zc310/log"
 	"github.com/zc310/utils"
 	"github.com/zc310/utils/hash"
-
 	"bufio"
 	"bytes"
 	"time"
@@ -25,7 +24,7 @@ type Cache struct {
 	Hash    string                 `json:"hash"`
 	Check   CheckList              `json:"check"`
 	timeout time.Duration
-	hashFun func(b []byte) []byte
+	hashFun func(b []byte) string
 	cache   cache.Cache
 
 	log log.Logger
@@ -87,8 +86,8 @@ func (p *Cache) Process(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 		}
 		h(ctx)
 		if age, ok := fasthttputil.GetResponseAge(ctx, p.timeout); ok {
-			ctx.Response.Header.Set("Cache-Control", "public, max-age="+strconv.Itoa( int(p.timeout.Seconds())))
-			p.cache.Set(key, []byte(ctx.Response.String()), age)
+		    ctx.Response.Header.Set("Cache-Control", "public, max-age="+strconv.Itoa(int(p.timeout.Seconds())))
+			p.cache.SetTimeout(string(key), []byte(ctx.Response.String()), age)
 		}
 
 	}
@@ -96,13 +95,13 @@ func (p *Cache) Process(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 func (p *Cache) Handler() fasthttp.RequestHandler { return func(ctx *fasthttp.RequestCtx) {} }
 
 // GetHashFunc get hash func
-func GetHashFunc(a string) (f func(b []byte) []byte) {
+func GetHashFunc(a string) (f func(b []byte) string) {
 	if a == "" {
-		return func(b []byte) []byte { return b }
+		return func(b []byte) string { return string(b) }
 	}
 
 	if t, ok := hash.Get(a); ok {
-		return func(b []byte) []byte { return []byte(t(b)) }
+		return func(b []byte) string { return  t(b) }
 	}
-	return func(b []byte) []byte { return []byte(hash.MD5(b)) }
+	return func(b []byte) string { return hash.MD5(b) }
 }

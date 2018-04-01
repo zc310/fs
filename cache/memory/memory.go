@@ -19,10 +19,10 @@ type MemoryCache struct {
 }
 
 // Get get cached value by key
-func (p *MemoryCache) Get(key []byte) (value []byte, ok bool) {
+func (p *MemoryCache) Get(key string) (value []byte, ok bool) {
 	var b []byte
 	p.mu.RLock()
-	b, ok = p.items[string(key)]
+	b, ok = p.items[key]
 	p.mu.RUnlock()
 	if !ok {
 		return
@@ -33,15 +33,18 @@ func (p *MemoryCache) Get(key []byte) (value []byte, ok bool) {
 }
 
 // GetRange
-func (p *MemoryCache) GetRange(key []byte, low, high int64) (value []byte, ok bool) {
+func (p *MemoryCache) GetRange(key string, low, high int64) (value []byte, ok bool) {
 	if value, ok = p.Get(key); !ok {
 		return
 	}
 	return value[low:high], ok
 }
+func (p *MemoryCache) Set(key string, value []byte) {
+	p.SetTimeout(key, value, time.Hour*24*256)
+}
 
 // Put set cached value with key and expire time
-func (p *MemoryCache) Set(key []byte, value []byte, timeout time.Duration) (err error) {
+func (p *MemoryCache) SetTimeout(key string, value []byte, timeout time.Duration) (err error) {
 	b := make([]byte, 8+len(value))
 	binary.LittleEndian.PutUint64(b, uint64(time.Now().Add(timeout).Unix()))
 
@@ -54,11 +57,11 @@ func (p *MemoryCache) Set(key []byte, value []byte, timeout time.Duration) (err 
 }
 
 // Delete delete cached value by key
-func (p *MemoryCache) Delete(key []byte) (err error) {
+func (p *MemoryCache) Delete(key string) {
 	p.mu.Lock()
-	delete(p.items, string(key))
+	delete(p.items, key)
 	p.mu.Unlock()
-	return nil
+
 }
 
 // ClearAll clear all cache

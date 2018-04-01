@@ -14,7 +14,7 @@ type Singleflight struct {
 	Timeout string    `json:"timeout"`
 	Hash    string    `json:"hash"`
 	Check   CheckList `json:"check"`
-	hashFun func(b []byte) []byte
+	hashFun func(b []byte) string
 	log     log.Logger
 	g       singleflight.Group
 }

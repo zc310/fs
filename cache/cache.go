@@ -7,13 +7,15 @@ import (
 //Cache interface
 type Cache interface {
 	// Get get cached value by key
-	Get(key []byte) (value []byte, ok bool)
+	Get(key string) (value []byte, ok bool)
 	// GetRange
-	GetRange(key []byte, low, high int64) (value []byte, ok bool)
+	GetRange(key string, low, high int64) (value []byte, ok bool)
+	// Put set cached value with key
+	Set(key string, value []byte)
 	// Put set cached value with key and expire time
-	Set(key []byte, value []byte, timeout time.Duration) (err error)
+	SetTimeout(key string, value []byte, timeout time.Duration)error
 	// Delete delete cached value by key
-	Delete(key []byte) (err error)
+	Delete(key string)
 	// ClearAll clear all cache
 	ClearAll() (err error)
 }

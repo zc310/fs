@@ -14,7 +14,7 @@ func TestCache_Get(t *testing.T) {
 	assert.Equal(t, nil, err)
 	_, ok := cache.Get("aa")
 	assert.Equal(t, ok, false)
-	err = cache.Set(k, []byte("a"), time.Second*5)
+	err = cache.SetTimeout(k, []byte("a"), time.Second*5)
 
 	assert.Equal(t, nil, err)
 	b, ok := cache.Get(k)
@@ -23,7 +23,7 @@ func TestCache_Get(t *testing.T) {
 
 	k = "b"
 	v := bytes.Repeat([]byte("0123456789"), 1024*1024)
-	err = cache.Set(k, v, time.Minute*10)
+	err = cache.SetTimeout(k, v, time.Minute*10)
 	assert.Equal(t, err, nil)
 	b, ok = cache.Get(k)
 	assert.Equal(t, ok, true)
@@ -32,7 +32,7 @@ func TestCache_Get(t *testing.T) {
 	b, ok = cache.GetRange(k, 6, 9)
 	assert.Equal(t, ok, true)
 	assert.Equal(t, b, []byte("678"))
-	err = cache.Delete(k)
+	  cache.Delete(k)
 	cache.ClearAll()
 }
 func BenchmarkCache_Get(b *testing.B) {
@@ -41,7 +41,7 @@ func BenchmarkCache_Get(b *testing.B) {
 	var key [8]byte
 	for i := 0; i < b.N; i++ {
 		binary.LittleEndian.PutUint64(key[:], uint64(i))
-		m.Set(string(key[:]), make([]byte, 8), time.Hour*10)
+		m.SetTimeout(string(key[:]), make([]byte, 8), time.Hour*10)
 	}
 	b.StartTimer()
 	var hitCount int64
@@ -58,7 +58,7 @@ func BenchmarkCache_Set(b *testing.B) {
 	var key [8]byte
 	for i := 0; i < b.N; i++ {
 		binary.LittleEndian.PutUint64(key[:], uint64(i))
-		m.Set(string(key[:]), make([]byte, 8), time.Hour*10)
+		m.SetTimeout(string(key[:]), make([]byte, 8), time.Hour*10)
 	}
 }
 
