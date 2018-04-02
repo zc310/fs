@@ -21,7 +21,7 @@ type MgoCache struct {
 }
 
 func (p *MgoCache) Get(key string) ([]byte, bool) {
-	f, err := p.gfs.Open(p.fun(key))
+	f, err := p.gfs.OpenId(p.fun(key))
 	if err != nil {
 		return []byte{}, false
 	}
