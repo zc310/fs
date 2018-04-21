@@ -8,24 +8,25 @@ import (
 	"github.com/zc310/log"
 	"github.com/zc310/utils"
 	"github.com/zc310/utils/hash"
-	"bufio"
-	"bytes"
 	"time"
 
+	"bufio"
+	"bytes"
 	"github.com/zc310/fs/cache/memory"
 	"github.com/zc310/utils/fasthttputil"
 	"strconv"
 )
 
 type Cache struct {
-	Store   map[string]interface{} `json:"store"`
-	Key     string                 `json:"key"`
-	Timeout string                 `json:"timeout"`
-	Hash    string                 `json:"hash"`
-	Check   CheckList              `json:"check"`
-	timeout time.Duration
-	hashFun func(b []byte) string
-	cache   cache.Cache
+	Store      map[string]interface{} `json:"store"`
+	Key        string                 `json:"key"`
+	Timeout    string                 `json:"timeout"`
+	Hash       string                 `json:"hash"`
+	Check      CheckList              `json:"check"`
+	ReleaseKey string                 `json:"releasekey"`
+	timeout    time.Duration
+	hashFun    func(b []byte) string
+	cache      cache.Cache
 
 	log log.Logger
 }
@@ -49,14 +50,18 @@ func (p *Cache) Init(c *Config) (err error) {
 	p.Key = utils.IfEmpty(p.Key, "{request_uri}")
 	p.log = c.Logger.NewWithPrefix("cache")
 	p.hashFun = GetHashFunc(p.Hash)
+	if p.ReleaseKey == "" {
+		p.ReleaseKey = "_del"
+	}
 	return nil
 }
 func (p *Cache) UnInit() {}
 func (p *Cache) Process(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		var (
-			key []byte
-			err error
+			key     []byte
+			hashkey string
+			err     error
 		)
 		tpl := template.Get()
 		defer template.Put(tpl)
@@ -70,24 +75,37 @@ func (p *Cache) Process(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 			return
 		}
 
-		if key, err = tpl.Execute(p.Key); err != nil {
-			p.log.Error(err, ctx.Request.String())
+		if ctx.QueryArgs().Has(p.ReleaseKey) {
+			ctx.QueryArgs().Del(p.ReleaseKey)
+
+			if key, err = tpl.Execute(p.Key); err != nil {
+				p.log.Error(err, ctx.Request.String())
+			} else {
+				hashkey = p.hashFun(key)
+				p.cache.Delete(hashkey)
+			}
 		} else {
+			if key, err = tpl.Execute(p.Key); err != nil {
+				p.log.Error(err, ctx.Request.String())
+			} else {
+				hashkey = p.hashFun(key)
+				if b, ok := p.cache.Get(hashkey); ok {
+					ctx.Response.Read(bufio.NewReader(bytes.NewBuffer(b)))
 
-			if b, ok := p.cache.Get(p.hashFun(key)); ok {
-				ctx.Response.Read(bufio.NewReader(bytes.NewBuffer(b)))
-
-				tag1 := ctx.Response.Header.Peek("ETag")
-				if len(tag1) > 0 && bytes.Equal(ctx.Request.Header.Peek("If-None-Match"), tag1) {
-					ctx.NotModified()
+					tag1 := ctx.Response.Header.Peek("ETag")
+					if len(tag1) > 0 && bytes.Equal(ctx.Request.Header.Peek("If-None-Match"), tag1) {
+						ctx.NotModified()
+					}
+					return
 				}
-				return
 			}
 		}
+
 		h(ctx)
+
 		if age, ok := fasthttputil.GetResponseAge(ctx, p.timeout); ok {
-		    ctx.Response.Header.Set("Cache-Control", "public, max-age="+strconv.Itoa(int(p.timeout.Seconds())))
-			p.cache.SetTimeout(string(key), []byte(ctx.Response.String()), age)
+			ctx.Response.Header.Set("Cache-Control", "public, max-age="+strconv.Itoa(int(p.timeout.Seconds())))
+			p.cache.SetTimeout(hashkey, []byte(ctx.Response.String()), age)
 		}
 
 	}
@@ -101,7 +119,7 @@ func GetHashFunc(a string) (f func(b []byte) string) {
 	}
 
 	if t, ok := hash.Get(a); ok {
-		return func(b []byte) string { return  t(b) }
+		return func(b []byte) string { return t(b) }
 	}
 	return func(b []byte) string { return hash.MD5(b) }
 }
