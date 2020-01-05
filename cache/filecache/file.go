@@ -3,6 +3,7 @@ package filecache
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -29,27 +30,27 @@ func (p *cacheValue) Expired() bool {
 }
 
 type Cache struct {
-	cachePath string
-	db        *leveldb.DB
-	fileSize  uint64
+	dir      string
+	db       *leveldb.DB
+	fileSize uint64
 }
 
 func New(store map[string]interface{}) (cache.Cache, error) {
-	var cachepath string
+	var dir string
 	if store != nil {
-		cachepath = utils.GetString(store["path"])
+		dir = utils.GetString(store["path"])
 	}
 
 	var err error
-	if cachepath == "" {
-		cachepath, err = ioutil.TempDir(os.TempDir(), "cache")
+	if dir == "" {
+		dir, err = ioutil.TempDir(os.TempDir(), "cache")
 		if err != nil {
 			return nil, err
 		}
-	}
-	db, err := leveldb.OpenFile(filepath.Join(cachepath, "db"), nil)
-	if err != nil {
-		return nil, err
+	} else {
+		if err := os.MkdirAll(dir, 0777); err != nil {
+			return nil, err
+		}
 	}
 	var m uint64
 	if store != nil {
@@ -58,9 +59,38 @@ func New(store map[string]interface{}) (cache.Cache, error) {
 	if m <= 0 {
 		m = 128 * 1024
 	}
-	return &Cache{cachepath, db, m}, nil
+	var c Cache
+	err = c.open(dir, m)
+	if err != nil {
+		return nil, err
+	}
+
+	return &c, nil
 }
 
+func (p *Cache) open(dir string, s uint64) error {
+	info, err := os.Stat(dir)
+	if err != nil {
+		return err
+	}
+	if !info.IsDir() {
+		return &os.PathError{Op: "open", Path: dir, Err: fmt.Errorf("not a directory")}
+	}
+	for i := 0; i < 256; i++ {
+		name := filepath.Join(dir, fmt.Sprintf("%02x", i))
+		if err := os.MkdirAll(name, 0777); err != nil {
+			return err
+		}
+	}
+	p.db, err = leveldb.OpenFile(filepath.Join(dir, "db"), nil)
+	if err != nil {
+		return err
+	}
+	p.dir = dir
+	p.fileSize = s
+	return nil
+
+}
 func (p *Cache) getValue(key string) (*cacheValue, bool) {
 	b, err := p.db.Get([]byte(key), nil)
 	if err != nil {
@@ -81,7 +111,8 @@ func (p *Cache) Get(key string) (value []byte, ok bool) {
 	if cv, ok = p.getValue(key); !ok {
 		return
 	}
-	if ok = !cv.Expired(); !ok {
+	if cv.Expired() {
+		ok = false
 		return
 	}
 
@@ -104,7 +135,8 @@ func (p *Cache) GetRange(key string, low, high int64) (value []byte, ok bool) {
 	if cv, ok = p.getValue(key); !ok {
 		return
 	}
-	if ok = !cv.Expired(); !ok {
+	if cv.Expired() {
+		ok = false
 		return
 	}
 
@@ -140,11 +172,9 @@ func (p *Cache) SetTimeout(key string, value []byte, timeout time.Duration) (err
 		hash := sha1.New()
 		hash.Write([]byte(key))
 		file := hex.EncodeToString(hash.Sum(nil))
-		cachepath := filepath.Join(p.cachePath, filepath.Join(file[0:2], file[7:9]))
-		if err = os.MkdirAll(cachepath, os.ModePerm); err != nil {
-			return
-		}
-		cv.FileName = filepath.Join(cachepath, file)
+		dir := filepath.Join(p.dir, file[0:2])
+
+		cv.FileName = filepath.Join(dir, file)
 		if err = ioutil.WriteFile(cv.FileName, value, os.ModePerm); err != nil {
 			return err
 		}
@@ -175,12 +205,13 @@ func (p *Cache) Delete(key string) {
 
 // ClearAll clear all cache
 func (p *Cache) ClearAll() (err error) {
-	p.db.Close()
-	dbpath := filepath.Join(p.cachePath, "db")
-	os.RemoveAll(dbpath)
-	p.db, err = leveldb.OpenFile(dbpath, nil)
+	err = p.db.Close()
 	if err != nil {
 		return err
 	}
-	return nil
+	err = os.RemoveAll(p.dir)
+	if err != nil {
+		return err
+	}
+	return p.open(p.dir, p.fileSize)
 }

@@ -11,11 +11,11 @@ import (
 )
 
 func TestCache_Get(t *testing.T) {
-	cachepath := filepath.Join(os.TempDir(), "cache")
+	dir := filepath.Join(os.TempDir(), "cache")
 	cache, err := New(make(map[string]interface{}))
-	k :=  "a"
+	k := "a"
 	assert.Equal(t, nil, err)
-	_, ok := cache.Get( "aa")
+	_, ok := cache.Get("aa")
 	assert.Equal(t, ok, false)
 	err = cache.SetTimeout(k, []byte("a"), time.Second*5)
 	assert.Equal(t, nil, err)
@@ -34,9 +34,9 @@ func TestCache_Get(t *testing.T) {
 	b, ok = cache.GetRange(k, 6, 9)
 	assert.Equal(t, ok, true)
 	assert.Equal(t, b, []byte("678"))
-    cache.Delete(k)
+	cache.Delete(k)
 	cache.ClearAll()
-	os.RemoveAll(cachepath)
+	os.RemoveAll(dir)
 }
 
 func BenchmarkCache_Get(b *testing.B) {
