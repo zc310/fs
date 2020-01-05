@@ -25,7 +25,7 @@ type Cache struct {
 	Check      CheckList              `json:"check"`
 	ReleaseKey string                 `json:"releasekey"`
 	timeout    time.Duration
-	hashFun    func(b []byte) string
+	HashFun    func(b []byte) string
 	cache      cache.Cache
 
 	log log.Logger
@@ -49,7 +49,7 @@ func (p *Cache) Init(c *Config) (err error) {
 
 	p.Key = utils.IfEmpty(p.Key, "{request_uri}")
 	p.log = c.Logger.NewWithPrefix("cache")
-	p.hashFun = GetHashFunc(p.Hash)
+	p.HashFun = GetHashFunc(p.Hash)
 	if p.ReleaseKey == "" {
 		p.ReleaseKey = "_del"
 	}
@@ -81,14 +81,14 @@ func (p *Cache) Process(h fasthttp.RequestHandler) fasthttp.RequestHandler {
 			if key, err = tpl.Execute(p.Key); err != nil {
 				p.log.Error(err, ctx.Request.String())
 			} else {
-				hashkey = p.hashFun(key)
+				hashkey = p.HashFun(key)
 				p.cache.Delete(hashkey)
 			}
 		} else {
 			if key, err = tpl.Execute(p.Key); err != nil {
 				p.log.Error(err, ctx.Request.String())
 			} else {
-				hashkey = p.hashFun(key)
+				hashkey = p.HashFun(key)
 				if b, ok := p.cache.Get(hashkey); ok {
 					ctx.Response.Read(bufio.NewReader(bytes.NewBuffer(b)))
 
