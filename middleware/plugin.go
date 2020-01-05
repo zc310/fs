@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
+	"github.com/zc310/fasthttprouter"
 	"github.com/zc310/log"
 )
 
