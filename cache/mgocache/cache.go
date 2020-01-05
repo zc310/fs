@@ -103,5 +103,6 @@ func DefaultKey(s string) string {
 }
 
 func New(db *mgo.Database, name string, f func(string) string) *MgoCache {
+	db.C(name + ".files").EnsureIndexKey("filename")
 	return &MgoCache{db, db.GridFS(name), f}
 }
