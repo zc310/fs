@@ -40,7 +40,7 @@ func (p *Template) SetCtx(ctx *fasthttp.RequestCtx) {
 func (p *Template) Execute(t string) ([]byte, error) {
 	buf := bytebufferpool.Get()
 	defer bytebufferpool.Put(buf)
-	_, err := fasttemplate.New(t, "{", "}").ExecuteFunc(buf, (func(w io.Writer, tag string) (int, error) {
+	_, err := fasttemplate.New(t, "{", "}").ExecuteFunc(buf, func(w io.Writer, tag string) (int, error) {
 		switch tag {
 		case "tempdir":
 			return w.Write([]byte(os.TempDir()))
@@ -59,6 +59,8 @@ func (p *Template) Execute(t string) ([]byte, error) {
 					return w.Write(p.ctx.Request.Body())
 				case "content_type":
 					return w.Write(p.ctx.Request.Header.Peek("Content-Type"))
+				case "accept_encoding":
+					return w.Write(p.ctx.Request.Header.Peek("Accept-Encoding"))
 				case "content_length":
 					return w.Write([]byte(strconv.Itoa(len(p.ctx.PostBody()))))
 				case "query_string":
@@ -73,7 +75,7 @@ func (p *Template) Execute(t string) ([]byte, error) {
 			}
 			return 0, fmt.Errorf("[unknown tag %q]", tag)
 		}
-	}))
+	})
 	return buf.Bytes(), err
 }
 

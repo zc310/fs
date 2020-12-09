@@ -28,6 +28,7 @@ func TestTemplate_Execute(t *testing.T) {
 	req.Header.Set("User-Agent", "IE10")
 	req.Header.Set("Content-Type", "image/svg+xml")
 	req.Header.Set("Referer", "http://b.com")
+	req.Header.Set("Accept-Encoding", "br")
 	req.SetRequestURI("/a/b/c?asdfasdfas=asdfasdsa+d+f%09%27%27dd&a1=123")
 	ctx.Init(&req, nil, nil)
 	fmt.Fprint(ctx.Request.BodyWriter(), "123456789")
@@ -49,4 +50,5 @@ func TestTemplate_Execute(t *testing.T) {
 	testExecute(t, tmp, "{a1}", "123")
 	testExecute(t, tmp, "{User-Agent}", "IE10")
 	testExecute(t, tmp, "{Referer}", "http://b.com")
+	testExecute(t, tmp, "{accept_encoding}", "br")
 }
