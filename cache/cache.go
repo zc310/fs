@@ -13,9 +13,10 @@ type Cache interface {
 	// Put set cached value with key
 	Set(key string, value []byte)
 	// Put set cached value with key and expire time
-	SetTimeout(key string, value []byte, timeout time.Duration)error
+	SetTimeout(key string, value []byte, timeout time.Duration) error
 	// Delete delete cached value by key
 	Delete(key string)
 	// ClearAll clear all cache
 	ClearAll() (err error)
+	Close() error
 }

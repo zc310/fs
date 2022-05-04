@@ -2,9 +2,10 @@ package memory
 
 import (
 	"encoding/binary"
-	"github.com/zc310/fs/cache"
 	"sync"
 	"time"
+
+	"github.com/zc310/fs/cache"
 )
 
 // New returns a new Cache in in-memory
@@ -69,5 +70,8 @@ func (p *MemoryCache) ClearAll() (err error) {
 	p.mu.Lock()
 	p.items = nil
 	p.mu.Unlock()
+	return nil
+}
+func (p *MemoryCache) Close() error {
 	return nil
 }

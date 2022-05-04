@@ -23,7 +23,7 @@ func TestCache_Get(t *testing.T) {
 	assert.Equal(t, ok, true)
 	assert.Equal(t, b, []byte("a"))
 
-	k =  "b"
+	k = "b"
 	v := bytes.Repeat([]byte("0123456789"), 1024*1024)
 	err = cache.SetTimeout(k, v, time.Minute*10)
 	assert.Equal(t, err, nil)
@@ -43,9 +43,9 @@ func BenchmarkCache_Get(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		cache, err := New(nil)
 		assert.Equal(b, err, nil)
-		cache.SetTimeout( "a", []byte("01234567890"), time.Hour*10)
+		cache.SetTimeout("a", []byte("01234567890"), time.Hour*10)
 		for pb.Next() {
-			cache.Get( "a")
+			cache.Get("a")
 		}
 		cache.ClearAll()
 	})
@@ -54,7 +54,7 @@ func BenchmarkCache_Set(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		cache, _ := New(nil)
 		for pb.Next() {
-			cache.SetTimeout( "a", []byte("01234567890"), time.Hour*10)
+			cache.SetTimeout("a", []byte("01234567890"), time.Hour*10)
 		}
 		cache.ClearAll()
 	})

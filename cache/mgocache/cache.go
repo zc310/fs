@@ -1,12 +1,13 @@
 package mgocache
 
 import (
-	"crypto/md5"
+	"crypto/sha1"
 	"encoding/hex"
-	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
 	"io"
 	"time"
+
+	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 )
 
 type cacheInfo struct {
@@ -91,9 +92,11 @@ func (p *MgoCache) SetTimeout(key string, value []byte, timeout time.Duration) {
 func (p *MgoCache) Delete(key string) {
 	p.gfs.RemoveId(p.fun(key))
 }
-
-func Md5key(s string) string {
-	h := md5.New()
+func (p *MgoCache) Close() error {
+	return nil
+}
+func sha1key(s string) string {
+	h := sha1.New()
 	io.WriteString(h, s)
 
 	return hex.EncodeToString(h.Sum(nil))

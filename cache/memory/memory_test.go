@@ -32,7 +32,7 @@ func TestCache_Get(t *testing.T) {
 	b, ok = cache.GetRange(k, 6, 9)
 	assert.Equal(t, ok, true)
 	assert.Equal(t, b, []byte("678"))
-	  cache.Delete(k)
+	cache.Delete(k)
 	cache.ClearAll()
 }
 func BenchmarkCache_Get(b *testing.B) {

@@ -1,9 +1,8 @@
 package middleware
 
 import (
-	"github.com/valyala/fasthttp"
-
 	"fmt"
+	"github.com/valyala/fasthttp"
 
 	"net/http"
 	"runtime"

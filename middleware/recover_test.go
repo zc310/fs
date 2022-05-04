@@ -1,8 +1,9 @@
-package middleware
+package middleware_test
 
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
+	"github.com/zc310/fs/middleware"
 	"testing"
 
 	"github.com/zc310/log"
@@ -16,8 +17,8 @@ func TestRecoverHandler(t *testing.T) {
 		panic("test")
 	}
 
-	r := new(Recover)
-	c := new(Config)
+	r := new(middleware.Recover)
+	c := new(middleware.Config)
 	c.Logger = log.NewWithPrefix("recover")
 	r.Init(c)
 	r.Process(h)(&ctx)

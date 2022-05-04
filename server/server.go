@@ -3,18 +3,21 @@ package server
 import (
 	"strings"
 
+	"github.com/zc310/fs/config"
+	"github.com/zc310/fs/middleware"
+
 	"github.com/dustin/go-humanize"
 	"github.com/valyala/fasthttp"
 	"github.com/zc310/alice"
 	"github.com/zc310/fasthttprouter"
-	"github.com/zc310/fs/middleware"
+
 	"github.com/zc310/fs/template"
 	"github.com/zc310/log"
 	"github.com/zc310/utils/fasthttputil"
 )
 
 // Start 初始化
-func Start(c *Config) error {
+func Start(c *config.Config) error {
 	cfg := new(middleware.Config)
 	cfg.Router = fasthttprouter.New()
 	if c.Log.Path != "" {

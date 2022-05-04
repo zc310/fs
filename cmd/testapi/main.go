@@ -1,19 +1,25 @@
 package main
 
 import (
+	"encoding/json"
+	"flag"
 	"path/filepath"
+	"strconv"
+	"time"
 
 	"github.com/valyala/fasthttp"
 	"github.com/zc310/fasthttprouter"
 	"github.com/zc310/fs/middleware"
+	"github.com/zc310/fs/middleware/cache"
+	"github.com/zc310/fs/middleware/gzip"
+	"github.com/zc310/fs/middleware/logger"
+	"github.com/zc310/fs/middleware/singleflight"
+	"github.com/zc310/fs/middleware/stats"
 	"github.com/zc310/log"
 	"github.com/zc310/utils/fasthttputil"
 	"github.com/zc310/utils/fasthttputil/favicon"
 
 	"github.com/zc310/alice"
-
-	"encoding/json"
-	"flag"
 )
 
 type CompareResult struct {
@@ -35,22 +41,22 @@ func main() {
 	client360 = &fasthttp.HostClient{Addr: "cp.360.cn", MaxConns: 50}
 
 	cfg := &middleware.Config{log.NewWithPrefix("proxy"), router, "/"}
-	mwlog := &middleware.Logger{Filename: dir + "/logs/access.log",
+	mwlog := &logger.Logger{Filename: dir + "/logs/access.log",
 		MaxSize:    30,
 		MaxBackups: 7,
 		MaxAge:     7,
 		Compress:   false}
 	mwlog.Init(cfg)
-	gz := &middleware.Compress{}
+	gz := &gzip.Compress{}
 	dir = filepath.Join(dir, "cache")
 
-	mwstat := &middleware.Stats{}
+	mwstat := &stats.Stats{}
 	err = mwstat.Init(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	mwcache := &middleware.Cache{}
+	mwcache := &cache.Cache{}
 	mwcache.Store = map[string]interface{}{"name": "file", "path": dir}
 	mwcache.Key = "{document_root}.{request_body}"
 	mwcache.Hash = "sha1"
@@ -59,7 +65,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	sf := middleware.Singleflight{}
+	sf := singleflight.Singleflight{}
 	sf.Init(cfg)
 	sf.Key = "{document_root}.{request_body}"
 	sf.Hash = "sha1"
@@ -71,6 +77,7 @@ func main() {
 	//mw := []alice.Constructor{mwlog.Process, mwstat.Process,  gz.Process, sf.Process}
 
 	router.POST("/tools/getCompareResult", alice.New(mw...).Then(api))
+	router.GET("/time", alice.New(mw...).Then(test))
 
 	server := &fasthttp.Server{
 		MaxRequestBodySize: 70 * 1024 * 1024,
@@ -82,6 +89,11 @@ func main() {
 	log.Fatal(server.ListenAndServe(*port))
 }
 
+func test(ctx *fasthttp.RequestCtx) {
+	ctx.WriteString(time.Now().String())
+	ctx.Response.Header.Set("ETag", strconv.FormatInt(time.Now().Unix(), 10))
+
+}
 func api(ctx *fasthttp.RequestCtx) {
 	var err error
 	cr := &CompareResult{}
