@@ -21,7 +21,7 @@ require (
 	go.etcd.io/bbolt v1.3.6
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
-	gopkg.in/yaml.v3 v3.0.0-20220512140231-539c8e751b99
+	gopkg.in/yaml.v3 v3.0.0
 )
 
 require (
